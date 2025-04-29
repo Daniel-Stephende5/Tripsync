@@ -5,8 +5,7 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copy the Maven project files to the container
-COPY pom.xml 
-COPY src 
+COPY ..
 
 # Download dependencies and build the project
 RUN mvn clean package -DskipTests
