@@ -5,8 +5,8 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Copy the Maven project files to the container
-COPY pom.xml .
-COPY src ./src
+COPY OAuth2login/pom.xml .
+COPY OAuth2login/src ./src
 
 # Download dependencies and build the project
 RUN mvn clean package -DskipTests
