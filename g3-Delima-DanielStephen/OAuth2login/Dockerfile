@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy the Maven project files to the container
 COPY pom.xml
-COPY src
+COPY src ./src
 
 # Download dependencies and build the project
 RUN mvn clean package -DskipTests
