@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy the Maven project files to the container
 COPY pom.xml .
-COPY src ./src
+COPY OAuth2login
 
 # Download dependencies and build the project
 RUN mvn clean package -DskipTests
