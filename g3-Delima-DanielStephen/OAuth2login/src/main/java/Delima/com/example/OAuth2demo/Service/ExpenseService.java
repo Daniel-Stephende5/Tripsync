@@ -30,10 +30,12 @@ public class ExpenseService {
     }
 
     // Create a new expense
-    public ExpenseEntity createExpense(ExpenseEntity expense) {
-        // Ensure the entity is saved in the 'expenses' table
-        return expenseRepository.save(expense);
-    }
+    public ExpenseEntity createExpense(ExpenseEntity expense, String username) {
+    User user = userService.getUserByUsername(username)
+           .orElseThrow(() -> new RuntimeException("User not found: " + username));
+    expense.setUser(user);
+    return expenseRepository.save(expense);
+}
 
     // Update an existing expense
     public Optional<ExpenseEntity> updateExpense(Long id, ExpenseEntity newExpense) {
