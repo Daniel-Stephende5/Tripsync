@@ -13,7 +13,9 @@ public class Trip {
     private String destinationName;
     private double destinationLat;
     private double destinationLon;
-
+@ManyToOne
+@JoinColumn(name = "user_id", nullable = false)
+private User user;
     private double originLat;
     private double originLon;
   
