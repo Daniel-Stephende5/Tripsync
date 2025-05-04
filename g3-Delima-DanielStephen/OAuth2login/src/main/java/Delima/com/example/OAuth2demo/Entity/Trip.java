@@ -16,9 +16,7 @@ public class Trip {
 
     private double originLat;
     private double originLon;
-    @ManyToOne
-@JoinColumn(name = "user_id", nullable = false)
-private User user;
+  
     private LocalDate travelDate;
     @Lob
     private String mapImage;
