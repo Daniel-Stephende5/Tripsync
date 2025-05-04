@@ -32,6 +32,9 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found!"));
     }
+    public Optional<User> getUserByUsername(String username) {
+    return userRepository.findByUsername(username);
+}
     public User authenticateUser(String username, String rawPassword) {
         Optional<User> userOptional = userRepository.findByUsername(username);
 
