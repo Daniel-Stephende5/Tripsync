@@ -14,7 +14,7 @@ const MyTrips = () => {
   const fetchTrips = async () => {
     try {
       const token = localStorage.getItem('authToken'); // get token from localStorage
-      const response = await axios.get('http://localhost:8080/api/trips/user', {
+      const response = await axios.get('https://tripsync-1.onrender.com/api/trips/user', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -29,7 +29,7 @@ const MyTrips = () => {
     if (window.confirm('Are you sure you want to delete this trip?')) {
       try {
         const token = localStorage.getItem('authToken');
-        await axios.delete(`http://localhost:8080/api/trips/${id}`, {
+        await axios.delete(`https://tripsync-1.onrender.com/api/trips/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
