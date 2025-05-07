@@ -58,7 +58,7 @@ const BookTrip = () => {
       if (!userLocation || !destination || destination.lat === 0 || destination.lon === 0) return;
 
       try {
-        const response = await fetch('http://localhost:8080/api/routes', {
+        const response = await fetch('https://tripsync-1.onrender.com/api/routes', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ const BookTrip = () => {
         mapImage: mapImageBase64,
       };
 
-      const response = await fetch('http://localhost:8080/api/trips', {
+      const response = await fetch('https://tripsync-1.onrender.com/api/trips', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
