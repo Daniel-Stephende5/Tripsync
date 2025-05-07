@@ -44,7 +44,7 @@ const ExpensesPage = () => {
 
     try {
       const token = getToken();
-      const response = await fetch('http://localhost:8080/api/expenses/user', {
+      const response = await fetch('https://tripsyncspp2.vercel.app/api/expenses/user', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,  // Make sure the token is included here
@@ -82,8 +82,8 @@ const ExpensesPage = () => {
     };
 
     const endpoint = editMode && currentExpense?.id
-      ? `http://localhost:8080/api/expenses/${currentExpense.id}`
-      : 'http://localhost:8080/api/expenses/user';
+      ? `http://tripsyncspp2.vercel.app/api/expenses/${currentExpense.id}`
+      : 'http://tripsyncspp2.vercel.app/api/expenses/user';
     const method = editMode ? 'PUT' : 'POST';
 
     try {
@@ -120,7 +120,7 @@ const ExpensesPage = () => {
     const token = getToken();
 
     try {
-      const response = await fetch(`http://localhost:8080/api/expenses/${id}`, {
+      const response = await fetch(`http://tripsyncspp2.vercel.app/api/expenses/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`, //and here
