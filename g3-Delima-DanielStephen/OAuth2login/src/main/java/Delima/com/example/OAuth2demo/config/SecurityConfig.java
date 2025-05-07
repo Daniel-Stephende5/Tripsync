@@ -57,4 +57,16 @@ public class SecurityConfig {
 
         return http.build();
     }
+       @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOrigin("https://tripsyncspp2.vercel.app"); // Your frontend URL
+        configuration.addAllowedMethod("*"); // Allow all HTTP methods
+        configuration.addAllowedHeader("*"); // Allow all headers
+        configuration.setAllowCredentials(true); // Allow cookies/credentials
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration); // Apply CORS configuration to API paths
+        return source;
+    }
+}
 }
