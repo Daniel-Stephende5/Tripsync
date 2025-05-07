@@ -68,7 +68,7 @@ const SearchPlaces = () => {
 
   const fetchReviews = async (placeIds) => {
     try {
-      const response = await axiosInstance.get('http://localhost:8080/api/places/reviews', {
+      const response = await axiosInstance.get('http://tripsyncspp2.vercel.app/api/places/reviews', {
         params: { placeIds },
         paramsSerializer: params => qs.stringify(params, { arrayFormat: 'repeat' }),
       });
@@ -113,7 +113,7 @@ const SearchPlaces = () => {
   
       // Fetch places and weather in parallel
       const [placeResponse, weatherResponse] = await Promise.all([
-        axiosInstance.get('http://localhost:8080/api/places/places', {
+        axiosInstance.get('http://tripsyncspp2.vercel.app/api/places/places', {
           params: {
             lat,
             lon,
@@ -191,7 +191,7 @@ const SearchPlaces = () => {
     try {
       const token = localStorage.getItem('token');
       const response = await axiosInstance.put(
-        `http://localhost:8080/api/places/reviews/${reviewId}`,
+        `http://tripsyncspp2.vercel.app/api/places/reviews/${reviewId}`,
         { reviewText: newText },
         {
           headers: {
@@ -211,7 +211,7 @@ const SearchPlaces = () => {
   };
   const handleDeleteReview = async (placeId, reviewId) => {
     try {
-      await axiosInstance.delete(`http://localhost:8080/api/places/reviews/${reviewId}`);
+      await axiosInstance.delete(`https://tripsyncspp2.vercel.app/api/places/reviews/${reviewId}`);
       alert('Review deleted!');
       fetchReviews([placeId]);
     } catch (err) {
@@ -221,7 +221,7 @@ const SearchPlaces = () => {
   };
   const handleSubmitReview = async (place) => {
     try {
-      await axiosInstance.post('http://localhost:8080/api/places/reviews', {
+      await axiosInstance.post('https://tripsyncspp2.vercel.app/api/places/reviews', {
         placeId: place.xid,
         username: 'testuser',
         rating: place.rating || 5,
