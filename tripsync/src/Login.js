@@ -22,7 +22,7 @@ const Login = () => {
     const handleLogin = async (e) => {
       e.preventDefault();
       try {
-        const response = await axios.post('http://localhost:8080/api/auth/login', {
+        const response = await axios.post('https://tripsyncspp2.vercel.app/api/auth/login', {
           username,
           password
         }, {
@@ -52,7 +52,7 @@ const Login = () => {
             console.log('Google login success:', decoded);
     
             // Send the Google token to your backend for validation and JWT generation
-            const response = await axios.post('http://localhost:8080/api/auth/google', {
+            const response = await axios.post('https://tripsyncspp2.vercel.app/api/auth/google', {
                 token: credentialResponse.credential // Send the Google token to backend
             });
     
