@@ -3,7 +3,6 @@ package Delima.com.example.OAuth2demo.Entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "review")
 public class Review {
 
     @Id
@@ -16,10 +15,11 @@ public class Review {
     @Column(name = "review_text")// Unique identifier for the place
     private String reviewText;
 
-    @Column(name = "username")
-    private String username;
-    private int rating;
 
+    private int rating;
+    @ManyToOne()
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     // Getters and Setters
     public Long getId() {
         return id;
@@ -45,12 +45,12 @@ public class Review {
         this.reviewText = reviewText;
     }
 
-    public String getUsername() {
-        return username;
+    public User getUser() {
+        return user;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public int getRating() {

@@ -13,7 +13,12 @@ const MyTrips = () => {
 
   const fetchTrips = async () => {
     try {
-      const response = await axios.get('https://tripsync-1.onrender.com/api/trips');
+      const token = localStorage.getItem('authToken'); // get token from localStorage
+      const response = await axios.get('http://localhost:8080/api/trips/user', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setTrips(response.data);
     } catch (error) {
       console.error('Error fetching trips:', error);
@@ -23,7 +28,12 @@ const MyTrips = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this trip?')) {
       try {
-        await axios.delete(`https://tripsync-1.onrender.com/api/trips/${id}`);
+        const token = localStorage.getItem('authToken');
+        await axios.delete(`http://localhost:8080/api/trips/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         setTrips(trips.filter(trip => trip.id !== id));
       } catch (error) {
         console.error('Error deleting trip:', error);
@@ -82,15 +92,7 @@ const MyTrips = () => {
       ({trip.destinationLat?.toFixed(4)}, {trip.destinationLon?.toFixed(4)})
     </td>
     <td style={styles.cell}>
-      {trip.mapImage ? (
-        <img
-          src={trip.mapImage}
-          alt="Route Map"
-          style={{ width: '100px', height: 'auto', borderRadius: '5px' }}
-        />
-      ) : (
-        'No Image'
-      )}
+     
     </td>
     <td style={styles.cell}>
       <button onClick={() => handleEdit(trip)} style={styles.editButton}>

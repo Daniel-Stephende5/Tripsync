@@ -9,50 +9,51 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // Inject secret key and expiration time from application properties
-    @Value("${jwt.secret}")
+    // Use a static secret key (e.g., loaded from application.properties or hardcoded)
+    @Value("${jwt.secret}")  // The secret key from application.properties (or use a static key directly)
     private String secretKey;
 
-    @Value("${jwt.expirationMs}")
-    private long jwtExpirationMs;
-
-    // Generate JWT Token
+    // Generate JWT Token using the static secret key
     public String generateJwtToken(String username) {
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, secretKey.getBytes())
-                .compact();
+                .setSubject(username) // Set the subject (typically the username or user ID)
+                .setIssuedAt(new Date()) // Set the issued time
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // Set expiration (24 hours)
+                .signWith(SignatureAlgorithm.HS512, secretKey) // Sign with the static secret key
+                .compact(); // Create the JWT token
     }
 
-    // Validate JWT Token
-    public boolean validateJwtToken(String authToken) {
+    // Validate the JWT Token
+    public boolean validateJwtToken(String token) {
         try {
-            Jws<Claims> claims = Jwts.parser()
-                    .setSigningKey(secretKey.getBytes())
-                    .parseClaimsJws(authToken);
-            return true;
-        } catch (ExpiredJwtException e) {
-            System.out.println("JWT token is expired");
-        } catch (UnsupportedJwtException e) {
-            System.out.println("JWT token is unsupported");
-        } catch (MalformedJwtException e) {
-            System.out.println("JWT token is malformed");
-        } catch (SignatureException e) {
-            System.out.println("JWT signature does not match");
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey) // Ensure this is the correct secret key
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            // Debugging: Print the claims and expiration
+            System.out.println("JWT Claims: " + claims);
+            System.out.println("Token Expiration: " + claims.getExpiration());
+
+            // Check if token has expired
+            return !claims.getExpiration().before(new Date());
         } catch (Exception e) {
-            System.out.println("Invalid JWT token");
+            // Debugging: Print any exception details
+            System.out.println("Token validation failed: " + e.getMessage());
+            return false;
         }
-        return false;
     }
 
-    // Get the username from JWT Token
+    // Get the username from the JWT token
     public String getUsernameFromJwtToken(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(secretKey)
+        // Parse the token and extract the subject (username)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(secretKey) // Use the static secret key
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getSubject();
+
+        return claims.getSubject(); // Return the username (subject)
     }
 }

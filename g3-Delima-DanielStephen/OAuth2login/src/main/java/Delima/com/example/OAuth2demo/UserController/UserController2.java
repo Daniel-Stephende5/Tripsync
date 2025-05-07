@@ -1,27 +1,31 @@
-package Delima.com.example.OAuth2demo.UserController;
+package  Delima.com.example.OAuth2demo.UserController;
+
 import Delima.com.example.OAuth2demo.DTO.LoginRequest;
 import Delima.com.example.OAuth2demo.DTO.RegisterRequest;
 import Delima.com.example.OAuth2demo.Service.UserService;
-import Delima.com.example.OAuth2demo.Repository.UserRepository;
-import  Delima.com.example.OAuth2demo.Entity.User;
+ import Delima.com.example.OAuth2demo.Entity.User;
+import Delima.com.example.OAuth2demo.Security.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
-import java.util.List;
-
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:3000")  // React app URL
 public class UserController2 {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    public UserController2(UserService userService) {
+    @Autowired
+    public UserController2(UserService userService, JwtUtil jwtUtil) {
         this.userService = userService;
+        this.jwtUtil = jwtUtil;
     }
 
+    // Register new user
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest request) {
         try {
@@ -31,26 +35,16 @@ public class UserController2 {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // Login user
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest request) {
         try {
             User user = userService.authenticateUser(request.getUsername(), request.getPassword());
-            return ResponseEntity.ok("User logged in successfully: " + user.getUsername());
+            String token = jwtUtil.generateJwtToken(user.getUsername());
+            return ResponseEntity.ok(Map.of("token", token, "message", "User logged in successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers() {
-        try {
-            List<User> users = userService.getAllUsers();  // Fetch all users from the database
-            if (!users.isEmpty()) {
-                return ResponseEntity.ok(users);  // Return list of users
-            } else {
-                return ResponseEntity.status(404).body("No users found");
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error fetching users: " + e.getMessage());
         }
     }
 }

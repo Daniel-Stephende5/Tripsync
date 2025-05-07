@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "trip")
 public class Trip {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,17 +12,25 @@ public class Trip {
     private String destinationName;
     private double destinationLat;
     private double destinationLon;
-@ManyToOne
-@JoinColumn(name = "user_id", nullable = false)
-private User user;
+
     private double originLat;
     private double originLon;
-  
+
     private LocalDate travelDate;
-    @Lob
+
     private String mapImage;
     // Getters and Setters
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
     public Long getId() { return id; }
 
     public void setId(Long id) { this.id = id; }
@@ -49,8 +56,7 @@ private User user;
     public void setOriginLon(double originLon) { this.originLon = originLon; }
 
     public LocalDate getTravelDate() { return travelDate; }
-    public String getMapImage() { return mapImage; }
-    public void setMapImage(String mapImage) { this.mapImage=mapImage; }
+
 
     public void setTravelDate(LocalDate travelDate) { this.travelDate = travelDate; }
 }

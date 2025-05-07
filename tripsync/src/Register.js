@@ -19,7 +19,7 @@ const Register = () => {
       return;
     }
     try {
-     await axios.post('https://tripsync-1.onrender.com/api/auth/register', {
+     await axios.post( 'http://localhost:8080/api/auth/register',{
         username,
         email,
         password,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import qs from 'qs'; // ✅ Added qs for query serialization
+import qs from 'qs';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -9,21 +9,33 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import './LandingPage.css';
 
-const Navbar = ({ onTripsClick ,onExpensesClick,handleLogoClick}) => {
+const Navbar = ({ onTripsClick, onExpensesClick, handleLogoClick }) => {
   return (
     <nav className="navbar">
       <div className="navbar-logo" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>TripSync</div>
       <ul className="navbar-links">
-      <li><button className="navbar-link" onClick={onExpensesClick}>Expenses</button></li>
+        <li><button className="navbar-link" onClick={onExpensesClick}>Expenses</button></li>
         <li><button className="navbar-link" onClick={onTripsClick}>Trips</button></li>
-        <li><button className="navbar-link">Profile</button></li>
-        <li><button className="navbar-link">Settings</button></li>
-        <li><button className="navbar-link">Logout</button></li>
+       
       </ul>
     </nav>
   );
 };
+const axiosInstance = axios.create();
 
+// Add an interceptor to attach the token to requests
+axiosInstance.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 const SearchPlaces = () => {
   const [query, setQuery] = useState('');
   const [popularPlaces, setPopularPlaces] = useState([]);
@@ -32,28 +44,43 @@ const SearchPlaces = () => {
   const [coordinates, setCoordinates] = useState([51.505, -0.09]);
   const navigate = useNavigate();
   const [weather, setWeather] = useState(null);
-
+  const token = localStorage.getItem('authToken'); 
+   //  Get the token
+   const [reviewInputs, setReviewInputs] = useState({});
   const handleTripsClick = () => {
-    navigate('/landingpage');
+      navigate('/landingpage');
   };
+
   const handleExpensesClick = () => {
-    navigate('/expenses');  // Navigate to the Expenses page
+      navigate('/expenses');
   };
+
   const handleLogoClick = () => {
-    navigate('/landingpage');  // Navigate to landing page when logo is clicked
+      navigate('/landingpage');
   };
+
+  useEffect(() => {
+      if (!token) {
+          //  If no token is found, redirect to login page
+          navigate('/');
+      }
+  }, [token, navigate]);
+
   const fetchReviews = async (placeIds) => {
     try {
-      const response = await axios.get('https://tripsync-1.onrender.com/api/places/reviews', {
+      const response = await axiosInstance.get('http://localhost:8080/api/places/reviews', {
         params: { placeIds },
-        paramsSerializer: params => qs.stringify(params, { arrayFormat: 'repeat' }), // ✅ avoids brackets
+        paramsSerializer: params => qs.stringify(params, { arrayFormat: 'repeat' }),
       });
-
+  
       const reviewsMap = response.data.reduce((acc, review) => {
-        acc[review.placeId] = review.reviewText;
+        if (!acc[review.placeId]) {
+          acc[review.placeId] = [];
+        }
+        acc[review.placeId].push({ id: review.id, text: review.reviewText });
         return acc;
       }, {});
-
+  
       setUserReviews(reviewsMap);
     } catch (err) {
       console.error('Error fetching reviews:', err);
@@ -62,29 +89,31 @@ const SearchPlaces = () => {
 
   const handleSearch = async () => {
     if (!query) return;
-
+  
     try {
       setError('');
       setPopularPlaces([]);
-
-      const geoResponse = await axios.get('https://nominatim.openstreetmap.org/search', {
+  
+      // Fetch location data
+      const geoResponse = await axiosInstance.get('https://nominatim.openstreetmap.org/search', {
         params: { q: query, format: 'json', addressdetails: 1, limit: 1 },
         headers: {
           'Accept-Language': 'en',
           'User-Agent': 'TripSyncApp (youremail@example.com)',
         },
       });
-
+  
       if (!geoResponse.data || geoResponse.data.length === 0) {
         setError('No location found');
         return;
       }
-
+  
       const { lat, lon } = geoResponse.data[0];
       setCoordinates([parseFloat(lat), parseFloat(lon)]);
-
+  
+      // Fetch places and weather in parallel
       const [placeResponse, weatherResponse] = await Promise.all([
-        axios.get('https://tripsync-1.onrender.com/api/places/places', {
+        axiosInstance.get('http://localhost:8080/api/places/places', {
           params: {
             lat,
             lon,
@@ -93,28 +122,32 @@ const SearchPlaces = () => {
             limit: 10,
             format: 'json',
           },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }),
-        axios.get('https://api.open-meteo.com/v1/forecast', {
+        axiosInstance.get('https://api.open-meteo.com/v1/forecast', {
           params: {
             latitude: lat,
             longitude: lon,
             current_weather: true,
           },
-        })
+        }),
       ]);
-
+  
       const places = placeResponse.data;
-
+  
+      // Fetch detailed places data
       const detailedPlaces = await Promise.all(
         places.map(async (place) => {
           try {
-            const details = await axios.get(`https://opentripmap-places-v1.p.rapidapi.com/en/places/xid/${place.xid}`, {
+            const details = await axiosInstance.get(`https://opentripmap-places-v1.p.rapidapi.com/en/places/xid/${place.xid}`, {
               headers: {
                 'X-RapidAPI-Key': 'a291c92206msh89be76c578fa3d6p15eb77jsnc57a0c27e9ef',
                 'X-RapidAPI-Host': 'opentripmap-places-v1.p.rapidapi.com',
               },
             });
-
+  
             return {
               ...place,
               image: details.data.preview?.source || null,
@@ -123,49 +156,102 @@ const SearchPlaces = () => {
             };
           } catch (err) {
             console.warn(`Details fetch failed for ${place.name}`);
-            return place;
+            return place; // Return place even if there's an error
           }
         })
       );
+  
+      // Update weather and popular places state
       setWeather(weatherResponse.data.current_weather);
       setPopularPlaces(detailedPlaces);
-      const placeIds = detailedPlaces.map((place) => place.xid);
-      fetchReviews(placeIds);
+  
     } catch (err) {
       console.error('Error:', err);
-      setError('Failed to fetch data. Try again.');
+      if (err.response && err.response.status === 401) {
+        setError('You are not authorized. Please log in.');
+        navigate('/');  // Or navigate('/login')
+      } else {
+        setError('Failed to fetch data. Try again.');
+      }
     }
   };
-
+  useEffect(() => {
+    if (popularPlaces.length > 0) {
+      const placeIds = popularPlaces.map((place) => place.xid);
+      fetchReviews(placeIds);
+    }
+  }, [popularPlaces]);
   const handleReviewChange = (xid, review) => {
-    setUserReviews((prevReviews) => ({
-      ...prevReviews,
-      [xid]: review,
-    }));
+    setReviewInputs((prevReviews) => ({
+          ...prevReviews,
+          [xid]: review,
+      }));
   };
-
+  const handleUpdateReview = async (placeId, reviewId, newText) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axiosInstance.put(
+        `http://localhost:8080/api/places/reviews/${reviewId}`,
+        { reviewText: newText },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      console.log("PUT response:", response.data); // ✅ Log successful response
+  
+      alert('Review updated!');
+      fetchReviews([placeId]); // ✅ This could also throw — wrap it too
+    } catch (err) {
+      console.error('Error updating review:', err.response?.data || err.message || err);
+      alert('Failed to update review.');
+    }
+  };
+  const handleDeleteReview = async (placeId, reviewId) => {
+    try {
+      await axiosInstance.delete(`http://localhost:8080/api/places/reviews/${reviewId}`);
+      alert('Review deleted!');
+      fetchReviews([placeId]);
+    } catch (err) {
+      console.error('Error deleting review:', err);
+      alert('Failed to delete review.');
+    }
+  };
   const handleSubmitReview = async (place) => {
     try {
-      await axios.post('https://tripsync-1.onrender.com/api/places/reviews', {
+      await axiosInstance.post('http://localhost:8080/api/places/reviews', {
         placeId: place.xid,
         username: 'testuser',
         rating: place.rating || 5,
-        reviewText: userReviews[place.xid],
+        reviewText: reviewInputs[place.xid],
       });
-
+  
       alert('Review successfully posted!');
+  
+      // Clear the input field
+      setReviewInputs((prevInputs) => ({
+        ...prevInputs,
+        [place.xid]: '',
+      }));
+  
+      // Fetch updated reviews
+      fetchReviews([place.xid]);
     } catch (error) {
       console.error('Error posting review:', error);
       alert('Failed to post review. Please try again later.');
     }
   };
+  
+  
 
   const MapUpdater = ({ coordinates }) => {
-    const map = useMap();
-    useEffect(() => {
-      map.setView(coordinates, 13);
-    }, [coordinates, map]);
-    return null;
+      const map = useMap();
+      useEffect(() => {
+          map.setView(coordinates, 13);
+      }, [coordinates, map]);
+      return null;
   };
 
   return (
@@ -232,24 +318,66 @@ const SearchPlaces = () => {
                 <p style={{ maxWidth: '600px', marginTop: '10px' }}>{place.description}</p>
               )}
 
-              <div className="rating-container">
-                <p style={{ margin: '10px 0 5px' }}><strong>User Rating:</strong></p>
-                <div className="stars">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className={i < place.rating ? 'star filled' : 'star'}>&#9733;</span>
-                  ))}
-                </div>
-                <p style={{ fontStyle: 'italic', color: '#666' }}>"{userReviews[place.xid] || 'No review yet'}</p>
-              </div>
+<div className="rating-container">
+  <p style={{ margin: '10px 0 5px' }}><strong>User Reviews:</strong></p>
+  
+  {Array.isArray(userReviews[place.xid]) && userReviews[place.xid].length > 0 ? (
+    userReviews[place.xid].map((review, idx) => (
+    <div key={idx} style={{ marginBottom: '8px' }}>
+      <p style={{ fontStyle: 'italic', color: '#adff2f ', marginBottom: '4px' }}>
+        "{review.text}"
+      </p>
+      <div>
+        <button
+          onClick={() => {
+            const newText = prompt("Edit your review:", review.text);
+            console.log("New review text:", newText);
+            if (newText && newText !== review.text) {
+              handleUpdateReview(place.xid, review.id, newText);
+            }
+          }}
+          style={{
+            marginRight: '10px',
+            padding: '4px 8px',
+            fontSize: '12px',
+            backgroundColor: '#ffc107',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: 'pointer',
+          }}
+        >
+          Edit
+        </button>
+        <button
+          onClick={() => handleDeleteReview(place.xid, review.id)}
+          style={{
+            padding: '4px 8px',
+            fontSize: '12px',
+            backgroundColor: '#f44336',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '3px',
+            cursor: 'pointer',
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  ))
+) : (
+  <p style={{ fontStyle: 'italic', color: '#d3f8d3' }}>"No reviews yet"</p>
+)}
+</div>
 
-              <div style={{ marginTop: '10px' }}>
-                <textarea
-                  rows="2"
-                  placeholder="Write your review here..."
-                  style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
-                  value={userReviews[place.xid] || ''}
-                  onChange={(e) => handleReviewChange(place.xid, e.target.value)}
-                />
+<div style={{ marginTop: '10px' }}>
+  <textarea
+    rows="2"
+    placeholder="Write your review here..."
+    style={{ width: '100%', padding: '8px', borderRadius: '4px' }}
+    value={reviewInputs[place.xid] || ''}
+    onChange={(e) => handleReviewChange(place.xid, e.target.value)}
+  />
                 <button
                   onClick={() => handleSubmitReview(place)}
                   style={{
@@ -266,6 +394,7 @@ const SearchPlaces = () => {
                 </button>
               </div>
 
+              <div style={{ marginTop: '15px' }}>
               <button
                 onClick={() =>
                   navigate('/booktrip', {
@@ -290,6 +419,7 @@ const SearchPlaces = () => {
               >
                 Book Trip
               </button>
+              </div>
             </li>
           ))}
         </ul>

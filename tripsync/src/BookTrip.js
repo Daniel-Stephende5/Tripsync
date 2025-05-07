@@ -12,8 +12,7 @@ import './LandingPage.css';
 
 const BookTrip = () => {
   const { state } = useLocation();
-  const destination = state?.destination || { name: 'Unknown Destination', lat: 0, lon: 0 };
-
+  const destination = state?.destination || null;
   const [userLocation, setUserLocation] = useState(null);
   const [travelDate, setTravelDate] = useState(new Date());
   const [routeCoords, setRouteCoords] = useState([]);
@@ -29,62 +28,71 @@ const BookTrip = () => {
     shadowSize: [41, 41],
   });
 
+  // Redirect if no destination or invalid lat/lon
+  useEffect(() => {
+    if (!destination || typeof destination.lat !== 'number' || typeof destination.lon !== 'number') {
+      alert('No destination selected. Redirecting to Search Places.');
+      navigate('/searchplaces');
+    }
+  }, [destination, navigate]);
+
+  // Fetch user location
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const current = [position.coords.latitude, position.coords.longitude];
-        setUserLocation(current);
-      },
-      (err) => {
-        console.warn('Geolocation error:', err);
-        setUserLocation([14.5995, 120.9842]); // Manila fallback
-      }
+      (position) => setUserLocation([position.coords.latitude, position.coords.longitude]),
+      () => setUserLocation([14.5995, 120.9842]) // fallback to Manila
     );
   }, []);
 
+  // Fetch route after user location and destination are available
   useEffect(() => {
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      alert('You must be logged in to fetch routes.');
+      navigate('/');
+      return;
+    }
+
     const fetchRoute = async () => {
-      if (!userLocation || destination.lat === 0 || destination.lon === 0) return;
-    
+      if (!userLocation || !destination || destination.lat === 0 || destination.lon === 0) return;
+
       try {
-        const response = await fetch('https://tripsync-1.onrender.com/api/routes', {
+        const response = await fetch('http://localhost:8080/api/routes', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             coordinates: [
-              [userLocation[1], userLocation[0]],
-              [destination.lon, destination.lat],
+              [userLocation[1], userLocation[0]], // long, lat for user
+              [destination.lon, destination.lat], // long, lat for destination
             ],
           }),
         });
-    
-        const data = await response.json(); // <-- important
-    
+
+        if (!response.ok) {
+          throw new Error('Error fetching directions.');
+        }
+
+        const data = await response.json();
         const coords = data.features[0].geometry.coordinates.map(([lon, lat]) => [lat, lon]);
         setRouteCoords(coords);
       } catch (error) {
         console.error('Error fetching directions:', error);
       }
     };
-    
     fetchRoute();
-  }, [userLocation, destination]);
+  }, [userLocation, destination, navigate]);
 
-  const handleBackToSearch = () => {
-    navigate('/searchplaces');
-  };
-
+  // Capture map image
   const captureMapImage = async () => {
-    if (!mapWrapperRef.current) {
-      console.error('Map wrapper not found.');
-      return;
-    }
+    if (!mapWrapperRef.current) return;
+
     try {
       const canvas = await html2canvas(mapWrapperRef.current, { useCORS: true });
       const imgData = canvas.toDataURL('image/png');
-
       const link = document.createElement('a');
       link.href = imgData;
       link.download = 'map_route.png';
@@ -94,9 +102,17 @@ const BookTrip = () => {
     }
   };
 
+  // Handle trip booking
   const handleBookTrip = async () => {
-    if (!userLocation || destination.lat === 0 || destination.lon === 0) {
+    if (!userLocation || !destination || destination.lat === 0 || destination.lon === 0) {
       alert('Missing location data.');
+      return;
+    }
+
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      alert('You must be logged in to book a trip.');
+      navigate('/');
       return;
     }
 
@@ -114,10 +130,11 @@ const BookTrip = () => {
         mapImage: mapImageBase64,
       };
 
-      const response = await fetch('https://tripsync-1.onrender.com/api/trips', {
+      const response = await fetch('http://localhost:8080/api/trips', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(tripData),
       });
@@ -127,7 +144,8 @@ const BookTrip = () => {
         alert(`Trip booked! Trip ID: ${savedTrip.id}`);
         navigate('/mytrips');
       } else {
-        alert('Failed to book trip.');
+        const errText = await response.text();
+        alert(`Failed to book trip: ${errText}`);
       }
     } catch (error) {
       console.error('Error booking trip:', error);
@@ -136,30 +154,26 @@ const BookTrip = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', minHeight: '100vh', minWidth: '200vh' }}>
-      <h1 style={{ marginBottom: '20px' }}>Book Your Trip</h1>
-      <p style={{ marginBottom: '20px' }}><strong>Destination:</strong> {destination.name}</p>
+    <div className="book-trip-container">
+      <h1>Book Your Trip</h1>
+      {destination && <p><strong>Destination:</strong> {destination.name}</p>}
 
-      <div style={{ marginBottom: '20px' }}>
+      <div>
         <label><strong>Travel Date:</strong></label><br />
         <DatePicker
           selected={travelDate}
-          onChange={(date) => setTravelDate(date)}
+          onChange={setTravelDate}
           minDate={new Date()}
           dateFormat="MMMM d, yyyy"
         />
       </div>
 
-      <div id="map" ref={mapWrapperRef} style={{ width: '100%', maxWidth: '800px', height: '500px', marginBottom: '20px' }}>
-        {userLocation && (
-          <MapContainer
-            center={userLocation}
-            zoom={7}
-            style={{ height: '100%', width: '100%' }}
-          >
+      <div ref={mapWrapperRef} className="map-wrapper">
+        {userLocation && destination && (
+          <MapContainer center={userLocation} zoom={7} style={{ height: '500px', width: '100vh' }}>
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap contributors'
+              attribution="&copy; OpenStreetMap contributors"
             />
             <Marker position={userLocation} icon={icon}>
               <Popup>Your Location</Popup>
@@ -167,58 +181,15 @@ const BookTrip = () => {
             <Marker position={[destination.lat, destination.lon]} icon={icon}>
               <Popup>{destination.name}</Popup>
             </Marker>
-            {routeCoords.length > 0 && (
-              <Polyline positions={routeCoords} color="blue" />
-            )}
+            {routeCoords.length > 0 && <Polyline positions={routeCoords} color="blue" />}
           </MapContainer>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <button
-          onClick={handleBookTrip}
-          style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            background: '#1976d2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Book Trip
-        </button>
-
-        <button
-          onClick={handleBackToSearch}
-          style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            background: '#f5f5f5',
-            color: '#333',
-            border: '1px solid #ccc',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Back to Search
-        </button>
-
-        <button
-          onClick={captureMapImage}
-          style={{
-            padding: '10px 20px',
-            fontSize: '16px',
-            background: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer'
-          }}
-        >
-          Save Route Image
-        </button>
+      <div className="button-group">
+        <button onClick={handleBookTrip} style={{backgroundColor:"green",color:"white",padding:"10px",marginTop:"5px"}}>Book Trip</button>
+        <button onClick={() => navigate('/searchplaces')}style={{backgroundColor:"green",color:"white",padding:"10px",marginTop:"5px"}}>Back to Search</button>
+        <button onClick={captureMapImage}style={{backgroundColor:"green",color:"white",padding:"10px",marginTop:"5px"}}>Save Route Image</button>
       </div>
     </div>
   );
