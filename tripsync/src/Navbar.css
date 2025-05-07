@@ -1,0 +1,37 @@
+.navbar {
+    display: flex;
+    justify-content: space-between; /* Distribute space evenly between logo and buttons */
+    align-items: center;
+    background-color: #0f172a;
+    color: white;
+    position: sticky;
+    top: 0;
+    width: 100%; /* Ensures the navbar spans the full width of the page */
+    padding: 1rem 2rem; /* Add padding for spacing */
+    box-sizing: border-box; /* Include padding in the width calculation */
+  }
+  .navbar-logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .navbar-links {
+    list-style: none;
+    display: flex; /* Align buttons horizontally */
+    gap: 1.5rem; /* Space out buttons */
+    margin: 0;
+    padding: 0;
+  }
+  
+  .navbar-links button {
+    background: none;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  .navbar-links button:hover {
+    text-decoration: none;
+  }
+  
