@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000")  // React app URL
+@CrossOrigin(origins = "https://tripsyncspp2.vercel.app")  // React app URL
 public class UserController2 {
 
     private final UserService userService;
