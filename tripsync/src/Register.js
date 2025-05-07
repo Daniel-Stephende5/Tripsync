@@ -19,7 +19,7 @@ const Register = () => {
       return;
     }
     try {
-     await axios.post( 'http://localhost:8080/api/auth/register',{
+     await axios.post( 'https://tripsyncspp2.vercel.app/api/auth/register',{
         username,
         email,
         password,
