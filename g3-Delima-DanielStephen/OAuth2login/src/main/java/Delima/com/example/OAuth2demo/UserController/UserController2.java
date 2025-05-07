@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "https://tripsync-1.onrender.com")  // React app URL
+ // React app URL
 public class UserController2 {
 
     private final UserService userService;
