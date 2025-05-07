@@ -19,7 +19,7 @@ public class JwtUtil {
                 .setSubject(username) // Set the subject (typically the username or user ID)
                 .setIssuedAt(new Date()) // Set the issued time
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // Set expiration (24 hours)
-                .signWith(SignatureAlgorithm.HS512, secretKey) // Sign with the static secret key
+                .signWith(SignatureAlgorithm.HS256, secretKey) // Sign with the static secret key
                 .compact(); // Create the JWT token
     }
 
