@@ -15,6 +15,7 @@ public class WebConfig {
                 registry.addMapping("/api/**")
                         .allowedOrigins("https://tripsyncspp2.vercel.app")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
+                      .allowedHeaders("*")
                         .allowCredentials(true);
             }
         };
