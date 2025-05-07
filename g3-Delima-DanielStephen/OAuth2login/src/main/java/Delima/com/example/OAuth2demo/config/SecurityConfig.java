@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -45,7 +48,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/places/reviews/","/api/places/reviews/**").permitAll()
                         .requestMatchers("/api/expenses/**","/api/routes**","/api/trips**","/api/places/reviews/**").authenticated()
                         .anyRequest().authenticated()
-                        
+
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS) // Stateless session management
@@ -57,7 +60,7 @@ public class SecurityConfig {
 
         return http.build();
     }
-       @Bean
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin("https://tripsyncspp2.vercel.app"); // Your frontend URL
@@ -68,5 +71,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/api/**", configuration); // Apply CORS configuration to API paths
         return source;
     }
-}
 }
