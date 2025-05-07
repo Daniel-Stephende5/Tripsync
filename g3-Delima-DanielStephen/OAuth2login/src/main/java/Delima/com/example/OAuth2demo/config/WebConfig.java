@@ -13,7 +13,7 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("tripsyncspp2.vercel.app")
+                        .allowedOrigins("https://tripsyncspp2-hhlaycpju-daniels-projects-19c8a190.vercel.app/")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowCredentials(true);
             }
