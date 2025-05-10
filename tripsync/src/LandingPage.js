@@ -17,8 +17,7 @@ const Navbar = ({ onTripsClick, onExpensesClick, onLogoutClick }) => {
       <ul className="navbar-links">
         <li><button className="navbar-link" onClick={onExpensesClick}>Expenses</button></li>
         <li><button className="navbar-link" onClick={onTripsClick}>Trips</button></li>
-        <li><button className="navbar-link">Profile</button></li>
-        <li><button className="navbar-link">Settings</button></li>
+     
         <li><button className="navbar-link" onClick={onLogoutClick}>Logout</button></li>
       </ul>
     </nav>
